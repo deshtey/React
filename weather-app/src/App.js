@@ -1,7 +1,9 @@
 import React, { Component } from "react";
-import Form from "./components/form";
+import InputForm from "./components/form";
 import Weather from "./components/weather";
+import { Container } from "reactstrap";
 
+const API_Key = "004d555f33279aedcf1245900370a34b";
 class App extends Component {
   state = {
     city: "",
@@ -9,22 +11,40 @@ class App extends Component {
     temp: "",
     humidity: "",
     description: "",
-    errors: []
+    errors: ""
   };
-  getWeather = event => {
+  getWeather = async event => {
     event.preventDefault();
-    this.setState({
-      city: "Nairobi",
-      country: "KE",
-      temp: "25",
-      humidity: "25",
-      description: "Sunny"
-    });
+    const city = event.target.elements.city.value;
+    const countryinfo = event.target.elements.country.value;
+    const country = countryinfo.length > 0 ? "," + countryinfo : "";
+    const api_data = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}${country}&appid=${API_Key}&units=metric`
+    );
+    const weather_data = await api_data.json();
+    if (weather_data.name && weather_data.sys.country) {
+      this.setState({
+        city: weather_data.name,
+        country: weather_data.sys.country,
+        temp: weather_data.main.temp,
+        humidity: weather_data.main.humidity,
+        description: weather_data.weather[0].description,
+        errors: ""
+      });
+    } else {
+      this.setState({
+        errors: "new error"
+      });
+    }
   };
   render() {
     return (
-      <div>
-        <Form getWeather={this.getWeather} />
+      <Container>
+        <InputForm
+          className="inputform"
+          getWeather={this.getWeather}
+          errors={!!this.state.errors}
+        />
         <Weather
           city={this.state.city}
           country={this.state.country}
@@ -32,7 +52,7 @@ class App extends Component {
           humidity={this.state.humidity}
           temp={this.state.temp}
         />
-      </div>
+      </Container>
     );
   }
 }
